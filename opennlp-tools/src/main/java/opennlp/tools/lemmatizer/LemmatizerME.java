@@ -86,9 +86,26 @@ public class LemmatizerME implements Lemmatizer {
   }
 
   public String[] lemmatize(String[] toks, String[] tags) {
+    String[] ses = predictSES(toks, tags);
+    String[] lemmas = decodeLemmas(toks, ses);
+    return lemmas;
+  }
+
+  @Override public List<List<String>> lemmatize(List<String> toks,
+      List<String> tags) {
+    return null;
+  }
+
+  /**
+   * Predict Short Edit Script (automatically induced lemma class).
+   * @param toks the array of tokens
+   * @param tags the array of pos tags
+   * @return an array containing the lemma classes
+   */
+  public String[] predictSES(String[] toks, String[] tags) {
     bestSequence = model.bestSequence(toks, new Object[] {tags}, contextGenerator, sequenceValidator);
-    List<String> c = bestSequence.getOutcomes();
-    return c.toArray(new String[c.size()]);
+    List<String> ses = bestSequence.getOutcomes();
+    return ses.toArray(new String[ses.size()]);
   }
 
   /**
