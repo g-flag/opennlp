@@ -50,7 +50,6 @@ public class LemmaSampleStream extends FilterObjectStream<String, LemmaSample> {
       else {
         toks.add(parts[0]);
         tags.add(parts[1]);
-        //String ses = StringUtil.getShortestEditScript(parts[0], parts[2]);
         preds.add(parts[2]);
       }
     }

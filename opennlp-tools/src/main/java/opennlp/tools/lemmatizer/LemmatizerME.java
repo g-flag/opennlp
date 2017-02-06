@@ -18,10 +18,7 @@
 package opennlp.tools.lemmatizer;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import opennlp.tools.ml.BeamSearch;
 import opennlp.tools.ml.EventModelSequenceTrainer;
@@ -47,6 +44,7 @@ import opennlp.tools.util.TrainingParameters;
  */
 public class LemmatizerME implements Lemmatizer {
 
+  public static final int LEMMA_NUMBER = 29;
   public static final int DEFAULT_BEAM_SIZE = 3;
   protected int beamSize;
   private Sequence bestSequence;
@@ -93,7 +91,14 @@ public class LemmatizerME implements Lemmatizer {
 
   @Override public List<List<String>> lemmatize(List<String> toks,
       List<String> tags) {
-    return null;
+    String[] tokens = toks.toArray(new String[toks.size()]);
+    String[] posTags = tags.toArray(new String[tags.size()]);
+    String[][] allLemmas = predictLemmas(LEMMA_NUMBER, tokens, posTags);
+    List<List<String>> predictedLemmas = new ArrayList<>();
+    for (int i = 0; i < allLemmas.length; i++) {
+      predictedLemmas.add(Arrays.asList(allLemmas[i]));
+    }
+    return predictedLemmas;
   }
 
   /**
@@ -109,6 +114,25 @@ public class LemmatizerME implements Lemmatizer {
   }
 
   /**
+   * Predict all possible lemmas (using a default upper bound).
+   * @param numLemmas the default number of lemmas
+   * @param toks the tokens
+   * @param tags the postags
+   * @return a double array containing all posible lemmas for each token and postag pair
+   */
+  public String[][] predictLemmas(int numLemmas, String[] toks, String[] tags) {
+    Sequence[] bestSequences = model.bestSequences(numLemmas, toks, new Object[] {tags},
+            contextGenerator, sequenceValidator);
+    String[][] allLemmas = new String[bestSequences.length][];
+    for (int i = 0; i < allLemmas.length; i++) {
+      List<String> ses = bestSequences[i].getOutcomes();
+      String[] sesArray = ses.toArray(new String[ses.size()]);
+      allLemmas[i] = decodeLemmas(toks,sesArray);
+    }
+    return allLemmas;
+  }
+
+  /**
    * Decodes the lemma from the word and the induced lemma class.
    * @param toks the array of tokens
    * @param preds the predicted lemma classes
@@ -118,7 +142,6 @@ public class LemmatizerME implements Lemmatizer {
     List<String> lemmas = new ArrayList<>();
     for (int i = 0; i < toks.length; i++) {
       String lemma = StringUtil.decodeShortestEditScript(toks[i].toLowerCase(), preds[i]);
-      //System.err.println("-> DEBUG: " + toks[i].toLowerCase() + " " + preds[i] + " " + lemma);
       if (lemma.length() == 0) {
         lemma = "_";
       }
