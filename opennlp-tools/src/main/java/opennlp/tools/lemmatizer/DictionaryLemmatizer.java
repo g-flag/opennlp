@@ -18,7 +18,6 @@
 package opennlp.tools.lemmatizer;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -52,19 +51,14 @@ public class DictionaryLemmatizer implements Lemmatizer {
   // 1. We could get every lemma for a word,pos pair in the key
   // 2. We could get every pos,lemma for a word in the key
   // Crucially, both keys and values need to be collections, probably lists
-  public DictionaryLemmatizer(final InputStream dictionary) {
+  public DictionaryLemmatizer(final InputStream dictionary) throws java.io.IOException {
     this.dictMap = new HashMap<>();
     final BufferedReader breader = new BufferedReader(
         new InputStreamReader(dictionary));
     String line;
-    try {
-      while ((line = breader.readLine()) != null) {
-        final String[] elems = line.split("\t");
-        this.dictMap.put(Arrays.asList(elems[0], elems[1]),
-            Arrays.asList(elems[2]));
-      }
-    } catch (final IOException e) {
-      e.printStackTrace();
+    while ((line = breader.readLine()) != null) {
+      final String[] elems = line.split("\t");
+      this.dictMap.put(Arrays.asList(elems[0], elems[1]), Arrays.asList(elems[2]));
     }
   }
 
@@ -103,7 +97,7 @@ public class DictionaryLemmatizer implements Lemmatizer {
   }
 
   public List<List<String>> lemmatize(final List<String> tokens, final List<String> posTags) {
-    List<List<String>> allLemmas = new ArrayList<List<String>>();
+    List<List<String>> allLemmas = new ArrayList<>();
     for (int i = 0; i < tokens.size(); i++) {
       allLemmas.add(this.getAllLemmas(tokens.get(i), posTags.get(i)));
     }
